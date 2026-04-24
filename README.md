@@ -3,8 +3,8 @@
 example:
 ```
 external_components:
-    - source: github://burlizzi/victron
-      components: [ ess ]
+    - source: github://burlizzi/sml
+      components: [ sml ]
       refresh: 300s
 
 uart:
