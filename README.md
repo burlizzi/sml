@@ -9,7 +9,12 @@ external_components:
 
 uart:
   - id: uart_bus
-    rx_pin:  GPIO17
+    rx_pin:  
+      number: GPIO17
+      mode:
+        input: true
+        pullup: true
+        
     baud_rate: 9600
 
 
