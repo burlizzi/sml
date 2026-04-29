@@ -30,48 +30,7 @@ text_sensor:
     id: "immissione_text"
     name: "immissione_text"
     obis_code: "1-0:2.8.0"
-    on_value: 
-      then:
-       - lambda: |-
-          int64_t value=atoi(x.c_str());
-          
-          //first publish the immissione
-          id(immissione).publish_state(((float)value)/10000.0);
 
-
-          static int64_t last_value = 0;
-          static uint32_t last_time = 0;
-          uint32_t time = millis();
-          if (time==0)
-            return;
-          if( last_time==time)
-            return;
-          
-          if (last_time == 0){
-            last_value = value;
-            last_time  = time;
-            return;
-          }
-
-          float delta = value  - last_value;
-          float delta_t = time - last_time;
-
-          if(delta != 0 /*|| ( delta_t)>10000*/)
-          {
-            float change =      (float)delta /10.0 * 60.0 * 60.0 / (float)delta_t ;
-            last_value = value;
-            last_time  = time;
-            id(immissione_istantanea).publish_state(change);
-          }
-          if(( delta_t)>10000)
-          {
-            float change =      (float)delta /10.0 * 60.0 * 60.0 / (float)delta_t ;
-            id(immissione_istantanea).publish_state(change);
-          }
-
-          id(led15).set_inverted(!id(led15).is_inverted());
-          id(led15).turn_on();
-          
 
   - platform: sml
     sml_id: mysml
@@ -79,44 +38,65 @@ text_sensor:
     id: "consumo_text"
     name: "consumo_text"
     obis_code: "1-0:1.8.1"
-    on_value: 
-      then:
-       - lambda: |-
-          int64_t value=atoi(x.c_str());
+
+
+output:
+  - platform: gpio
+    pin: GPIO5 # Change this to your TX/LED pin
+    id: meter_ir_led
+
+number:
+  - platform: template
+    name: "Meter PIN Input"
+    id: meter_pin_input
+    min_value: 0
+    max_value: 9999
+    step: 1
+    initial_value: 0000
+    mode: box # Shows as a text box in Home Assistant
+    optimistic: true
+    restore_value: true
+
+script:
+  - id: enter_meter_pin_dynamic
+    mode: restart
+    then:
+      - lambda: |-
+          // Get the PIN from the 'number' component
+          int pin = (int)id(meter_pin_input).state;
           
-          //first publish the consumo
-          id(consumo).publish_state(((float)value)/10000.0);
+          // Split the 4-digit number into individual digits
+          int digits[4];
+          digits[0] = (pin / 1000) % 10;
+          digits[1] = (pin / 100) % 10;
+          digits[2] = (pin / 10) % 10;
+          digits[3] = pin % 10;
 
+          ESP_LOGI("main", "Starting PIN entry for: %04d", pin);
 
-          static int64_t last_value = 0;
-          static uint32_t last_time = 0;
-          uint32_t time = millis();
-          if (time==0)
-            return;
-          if( last_time==time)
-            return;
-          
-          if (last_time == 0){
-            last_value = value;
-            last_time  = time;
-            return;
+          for (int i = 0; i < 4; i++) {
+            ESP_LOGI("main", "Entering digit %d: %d", i+1, digits[i]);
+            
+            // Pulse the LED for the value of the digit
+            for (int p = 0; p < digits[i]; p++) {
+              id(meter_ir_led).turn_on();
+              delay(300); 
+              id(meter_ir_led).turn_off();
+              delay(400);
+            }
+            
+            // Wait 4 seconds for the meter to move to the next digit
+            delay(4000);
           }
+          ESP_LOGI("main", "PIN sequence complete.");
 
-          float delta = value  - last_value;
-          float delta_t = time - last_time;
 
-          if((delta != 0))
-          {
-            float change =      (float)delta /10.0 * 60.0 * 60.0 / (float)delta_t ;
-            last_value = value;
-            last_time  = time;
-            id(consumo_instantaneo).publish_state(change);
-          }
-          if(( delta_t)>10000)
-          {
-            float change =      (float)delta /10.0 * 60.0 * 60.0 / (float)delta_t ;
-            id(consumo_instantaneo).publish_state(change);
-          }
+button:
+  - platform: template
+    name: "Start PIN Sequence"
+    icon: "mdi:play-circle"
+    on_press:
+      - script.execute: enter_meter_pin_dynamic
 
 
   ```
