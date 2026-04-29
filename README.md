@@ -40,6 +40,16 @@ text_sensor:
     obis_code: "1-0:1.8.1"
 
 
+  - platform: sml
+    sml_id: mysml
+    #internal: True
+    id: "consumo_istatntaneo_text"
+    name: "consumo_istatntaneo_text"
+    obis_code: "1-0:16.7.0"
+
+
+
+
 output:
   - platform: gpio
     pin: GPIO5 # Change this to your TX/LED pin
