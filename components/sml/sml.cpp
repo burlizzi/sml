@@ -41,19 +41,26 @@ void Sml::loop() {
   while (available()) {
     unsigned char c = read();
     currentState = smlState(c);
+    //ESP_LOGW(TAG, "%d", c);
     if (currentState == SML_LISTEND) {
     /* check handlers on last received list */
+      //ESP_LOGW(TAG, "found");
       for (auto const &sml_listener : sml_listeners_) {
         if (!smlOBISCheck(sml_listener->obis_code))
           continue;
-          double value;
+        double value;
+        if (sml_listener->obis_code[3] == 0x08) { // energy reading in Wh 
           smlOBISWh(value);
           if (value>0)
           {
-            sml_listener->publish_val(static_cast<uint64_t>(value*10));
+            sml_listener->publish_val(static_cast<int64_t>(value*10));
           }
-            
-
+        }
+        else if (sml_listener->obis_code[3] == 0x07)  // power reading in W
+        {
+          smlOBISW(value);
+          sml_listener->publish_val(static_cast<int64_t>(value));
+        }
       }
 
     }

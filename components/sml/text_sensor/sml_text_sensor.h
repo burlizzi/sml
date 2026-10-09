@@ -10,7 +10,7 @@ namespace sml {
 class SmlTextSensor : public SmlListener, public text_sensor::TextSensor, public Component {
  public:
   SmlTextSensor(std::string server_id, std::string obis_code, SmlType format);
-  void publish_val(uint64_t value) override;
+  void publish_val(int64_t value) ;
   void dump_config() override;
 
  protected:

@@ -11,7 +11,7 @@ static const char *const TAG = "sml_text_sensor";
 SmlTextSensor::SmlTextSensor(std::string server_id, std::string obis_code, SmlType format)
     : SmlListener(std::move(server_id), std::move(obis_code)), format_(format) {}
 
-void SmlTextSensor::publish_val(uint64_t value) {
+void SmlTextSensor::publish_val(int64_t value) {
       publish_state(to_string(value));
 }
 
